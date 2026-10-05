@@ -2,6 +2,11 @@
 
 # NQ Quant Trader: 5K Payout System
 
+> **Validation fork:** execution and forward-validation assumptions have changed.
+> The performance figures below belong to upstream and must not be read as
+> results of this fork. See [validation changes](docs/VALIDATION_CHANGES.md) and
+> fresh `output/validation/research_results.json` for recalculated evidence.
+
 ### A 12-model MNQ futures day-trading system engineered for funded accounts
 
 **One codebase that backtests without look-ahead bias, validates with 25,000 Monte Carlo simulations, and trades live on TopStepX and Interactive Brokers with the exact same signal logic.**

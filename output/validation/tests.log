@@ -1,0 +1,40 @@
+........................................................................ [ 42%]
+........................................................................ [ 84%]
+..........................                                               [100%]
+============================== warnings summary ===============================
+..\..\venv\Lib\site-packages\eventkit\util.py:21
+  C:\Users\jgonzales\Documents\Codex\2026-10-05\buen\work\venv\Lib\site-packages\eventkit\util.py:21: DeprecationWarning: There is no current event loop
+    return asyncio.get_event_loop_policy().get_event_loop()
+
+tests/test_live_robustness.py::TestExecutorRiskControls::test_shutdown_cancels_pending
+tests/test_live_robustness.py::TestExecutorRiskControls::test_shutdown_flattens_open
+tests/test_live_robustness.py::TestAdaptiveGuardPersistence::test_save_and_load_state
+tests/test_live_robustness.py::TestShutdownSafety::test_shutdown_verifies_flat
+  C:\Users\jgonzales\Documents\Codex\2026-10-05\buen\work\source\s-k-28-nq-es-trader-5k-payout-0ee4392\tests\..\live\adaptive.py:434: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'saved_at': datetime.utcnow().isoformat(),
+
+tests/test_live_robustness.py::TestExecutorRiskControls::test_shutdown_cancels_pending
+tests/test_live_robustness.py::TestExecutorRiskControls::test_shutdown_flattens_open
+tests/test_live_robustness.py::TestShadowMode::test_shadow_skips_broker_modify_stop
+tests/test_live_robustness.py::TestPartialProfitLocking::test_partial_affects_total_r_on_close
+tests/test_live_robustness.py::TestShutdownSafety::test_shutdown_verifies_flat
+tests/test_live_robustness.py::TestDlcHardGuard::test_hard_stop_force_flattens_on_overrun
+  C:\Users\jgonzales\Documents\Codex\2026-10-05\buen\work\source\s-k-28-nq-es-trader-5k-payout-0ee4392\tests\..\live\adaptive.py:788: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'saved_at': datetime.utcnow().isoformat(),
+
+tests/test_live_robustness.py: 37 warnings
+  C:\Users\jgonzales\Documents\Codex\2026-10-05\buen\work\source\s-k-28-nq-es-trader-5k-payout-0ee4392\tests\..\live\adaptive.py:142: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow().isoformat()
+
+tests/test_live_robustness.py::TestAdaptiveGuardPersistence::test_save_and_load_journal
+  C:\Users\jgonzales\Documents\Codex\2026-10-05\buen\work\source\s-k-28-nq-es-trader-5k-payout-0ee4392\tests\..\live\adaptive.py:359: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow().isoformat(),
+
+tests/test_live_robustness.py::TestShadowMode::test_shadow_skips_broker_modify_stop
+tests/test_live_robustness.py::TestPartialProfitLocking::test_partial_affects_total_r_on_close
+tests/test_live_robustness.py::TestDlcHardGuard::test_hard_stop_force_flattens_on_overrun
+  C:\Users\jgonzales\Documents\Codex\2026-10-05\buen\work\source\s-k-28-nq-es-trader-5k-payout-0ee4392\tests\..\live\adaptive.py:706: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow().isoformat(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+170 passed, 52 warnings in 488.50s (0:08:08)

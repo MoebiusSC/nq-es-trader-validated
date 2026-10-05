@@ -1,0 +1,14 @@
+{
+  "upstream": {
+    "collision_exit": "target",
+    "collision_r": 0.5,
+    "gap_exit_price": 89.9375,
+    "daily_overrun_pnl": -1000.0
+  },
+  "corrected": {
+    "collision_exit": "stop_ambiguous",
+    "collision_r": -1.0,
+    "gap_exit_price": 85.0,
+    "daily_overrun_pnl": -1200.0
+  }
+}

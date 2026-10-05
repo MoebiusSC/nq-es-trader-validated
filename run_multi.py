@@ -81,6 +81,8 @@ def main():
     print("Scanning models...")
     gen = MultiModelGenerator(cfg)
     signals = gen.generate(raw, daily, df_es)
+    # History is warmup only: never count its trades in the requested period.
+    signals = [s for s in signals if s.ts >= first_date]
 
     model_counts = {}
     for s in signals:

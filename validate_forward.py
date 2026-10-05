@@ -17,13 +17,18 @@ import glob
 import json
 import os
 from collections import defaultdict
+from datetime import datetime
+from zoneinfo import ZoneInfo
+import math
+import numpy as np
 
 # Out-of-sample backtest baseline (3yr walk-forward, current settings):
 # WR 44.3%, expectancy +0.220R, PF 1.61. The live edge must track this.
 DEFAULT_BASELINE = {'win_rate': 44.3, 'expectancy_r': 0.220, 'profit_factor': 1.61}
 
 # GO/NO-GO thresholds (conservative; tune with experience).
-MIN_TRADES = 40            # statistical minimum
+MIN_TRADES = 100           # Screening threshold, not proof of profitability
+MIN_DAYS = 30
 DAY_LOSS_CAP = 1000.0      # daily loss must never exceed this (funded rule)
 EXPECTANCY_FLOOR_FRAC = 0.5  # live expectancy >= 50% of backtest (parity-drag allowance)
 WR_TOLERANCE_PTS = 8.0     # live WR within 8 points of backtest
@@ -49,24 +54,43 @@ def compute_live_stats(log_paths: list[str], day_cap: float = DAY_LOSS_CAP) -> d
     """Realized stats from one or more decision logs."""
     rs, pnls, dates = [], [], []
     daily = defaultdict(float)
+    day_rs = defaultdict(list)
+    invalid = 0
     for path in log_paths:
         for rec in _iter_trade_closed(path):
-            r = rec.get('total_r')
-            pnl = rec.get('pnl_usd', 0.0)
-            if r is None:
+            try:
+                r, pnl = float(rec['total_r']), float(rec['pnl_usd'])
+                stamp = datetime.fromisoformat(rec['timestamp'].replace('Z', '+00:00'))
+                if stamp.tzinfo is None or not math.isfinite(r) or not math.isfinite(pnl):
+                    raise ValueError('Invalid or timezone-naive trade record')
+                d = stamp.astimezone(ZoneInfo('America/New_York')).date().isoformat()
+            except (KeyError, ValueError, TypeError, AttributeError):
+                invalid += 1
                 continue
-            rs.append(float(r))
-            pnls.append(float(pnl))
-            d = (rec.get('timestamp') or '')[:10]
-            daily[d] += float(pnl)
+            account = str(rec.get('account_id') or os.path.abspath(os.path.dirname(path)))
+            rs.append(r)
+            pnls.append(pnl)
+            daily[(account, d)] += pnl
+            day_rs[d].append(r)
     n = len(rs)
     if n == 0:
-        return {'n_trades': 0}
+        return {'n_trades': 0, 'invalid_records': invalid}
     wins = [r for r in rs if r > 0]
     losses = [r for r in rs if r < 0]
     gross_win = sum(p for p in pnls if p > 0)
     gross_loss = abs(sum(p for p in pnls if p < 0))
     day_vals = list(daily.values())
+    # Resample contiguous 5-day blocks, grouping all accounts by calendar day
+    # so identical fleet trades are not treated as independent observations.
+    clusters = [day_rs[d] for d in sorted(day_rs)]
+    sums = np.array([sum(v) for v in clusters])
+    counts = np.array([len(v) for v in clusters])
+    rng = np.random.default_rng(142)
+    block = min(5, len(clusters))
+    starts = rng.integers(0, len(clusters) - block + 1,
+                          size=(5000, (len(clusters) + block - 1) // block))
+    indices = (starts[:, :, None] + np.arange(block)).reshape(5000, -1)[:, :len(clusters)]
+    estimates = sums[indices].sum(axis=1) / counts[indices].sum(axis=1)
     return {
         'n_trades': n,
         'win_rate': len(wins) / n * 100,
@@ -75,7 +99,11 @@ def compute_live_stats(log_paths: list[str], day_cap: float = DAY_LOSS_CAP) -> d
         'avg_loss_r': sum(losses) / len(losses) if losses else 0.0,
         'profit_factor': gross_win / gross_loss if gross_loss > 0 else float('inf'),
         'total_usd': sum(pnls),
-        'trading_days': len(day_vals),
+        'trading_days': len(day_rs),
+        'account_days': len(day_vals),
+        'invalid_records': invalid,
+        'expectancy_ci_low': float(np.percentile(estimates, 2.5)),
+        'expectancy_ci_high': float(np.percentile(estimates, 97.5)),
         'max_daily_loss': min(day_vals) if day_vals else 0.0,
         'mean_daily_usd': sum(day_vals) / len(day_vals) if day_vals else 0.0,
         'monthly_estimate_usd': (sum(day_vals) / len(day_vals) * 21) if day_vals else 0.0,
@@ -84,26 +112,32 @@ def compute_live_stats(log_paths: list[str], day_cap: float = DAY_LOSS_CAP) -> d
 
 
 def gate(stats: dict, baseline: dict = None, *, min_trades: int = MIN_TRADES,
+         min_days: int = MIN_DAYS,
          day_cap: float = DAY_LOSS_CAP,
          expectancy_floor_frac: float = EXPECTANCY_FLOOR_FRAC,
          wr_tol_pts: float = WR_TOLERANCE_PTS) -> dict:
     """Return {'verdict': GO|NO_GO|INSUFFICIENT_DATA, 'checks': [...]}."""
     baseline = baseline or DEFAULT_BASELINE
     n = stats.get('n_trades', 0)
-    if n < min_trades:
+    if n < min_trades or stats.get('trading_days', 0) < min_days:
         return {'verdict': 'INSUFFICIENT_DATA',
-                'reason': f'{n} trades < {min_trades} minimum', 'checks': []}
+                'reason': f"Need {min_trades} trades and {min_days} distinct trading days; "
+                          f"got {n} trades and {stats.get('trading_days', 0)} days", 'checks': []}
 
     exp_floor = baseline['expectancy_r'] * expectancy_floor_frac
     wr_floor = baseline['win_rate'] - wr_tol_pts
     checks = [
+        ('valid_records', stats.get('invalid_records', 0) == 0,
+         'Closed trade records must have finite R/PnL and timezone-aware timestamps'),
         ('daily_cap_held', stats['max_daily_loss'] > -day_cap - 0.01 and
                            stats['cap_breach_days'] == 0,
          f"max daily loss ${stats['max_daily_loss']:,.0f} vs cap -${day_cap:,.0f}, "
          f"{stats['cap_breach_days']} breach-days"),
         ('expectancy', stats['expectancy_r'] >= exp_floor,
          f"live {stats['expectancy_r']:+.3f}R vs floor {exp_floor:+.3f}R "
-         f"(baseline {baseline['expectancy_r']:+.3f}R)"),
+          f"(baseline {baseline['expectancy_r']:+.3f}R)"),
+        ('expectancy_confidence', stats.get('expectancy_ci_low', float('-inf')) >= exp_floor,
+         f"95% day-block bootstrap lower bound must exceed {exp_floor:+.3f}R"),
         ('win_rate', stats['win_rate'] >= wr_floor,
          f"live {stats['win_rate']:.1f}% vs floor {wr_floor:.1f}% "
          f"(baseline {baseline['win_rate']:.1f}%)"),
@@ -131,14 +165,14 @@ def main(argv=None) -> int:
 
     if args.json:
         print(json.dumps({'stats': stats, 'gate': result}, indent=2, default=str))
-        return 0
+        return 0 if result['verdict'] == 'GO' else 2
 
     print("=" * 64)
     print("  FORWARD-VALIDATION GATE")
     print("=" * 64)
     if stats.get('n_trades', 0) == 0:
         print("  No closed trades found in:", paths)
-        return 0
+        return 2
     print(f"  trades={stats['n_trades']}  days={stats['trading_days']}  "
           f"WR={stats['win_rate']:.1f}%  expectancy={stats['expectancy_r']:+.3f}R  "
           f"PF={stats['profit_factor']:.2f}")
@@ -150,7 +184,7 @@ def main(argv=None) -> int:
     for name, ok, detail in result.get('checks', []):
         print(f"    [{'PASS' if ok else 'FAIL'}] {name}: {detail}")
     print("=" * 64)
-    return 0
+    return 0 if result['verdict'] == 'GO' else 2
 
 
 if __name__ == '__main__':

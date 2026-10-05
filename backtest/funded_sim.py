@@ -26,12 +26,12 @@ def trades_to_daily_pnl(
 
     for t in trades:
         d = t.entry_time.date()
-        risk_per_contract = t.risk_ticks * MNQ_TICK_VALUE
+        risk_per_contract = t.risk_ticks * cfg.instrument.live_tick_value
         if risk_per_contract <= 0:
             continue
 
         model_risk = risk_map.get(t.model, 400)
-        contracts = min(MAX_CONTRACTS, int(model_risk / risk_per_contract))
+        contracts = min(cfg.risk.max_contracts, int(model_risk / risk_per_contract))
         if contracts <= 0:
             continue
 
@@ -44,14 +44,8 @@ def trades_to_daily_pnl(
 
         daily_pnl[d] = daily_pnl.get(d, 0.0) + trade_pnl
         new_running = daily_running.get(d, 0.0) + trade_pnl
-        if dlc is not None and dlc > 0:
-            new_running = max(new_running, -dlc)
+        # A stop cannot erase losses already realized, including overruns.
         daily_running[d] = new_running
-
-    if dlc is not None and dlc > 0:
-        for d in daily_pnl:
-            if daily_pnl[d] < -dlc:
-                daily_pnl[d] = -dlc
 
     return np.array([daily_pnl.get(d, 0.0) for d in all_dates])
 

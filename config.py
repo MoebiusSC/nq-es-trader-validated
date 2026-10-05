@@ -26,7 +26,7 @@ class SessionTimes:
     london_kz_end: time = field(default_factory=lambda: time(5, 0))
     ny_am_kz_start: time = field(default_factory=lambda: time(9, 30))
     ny_am_kz_end: time = field(default_factory=lambda: time(11, 0))
-    session_close: time = field(default_factory=lambda: time(16, 59))
+    session_close: time = field(default_factory=lambda: time(15, 55))
 
 
 @dataclass
@@ -54,6 +54,10 @@ class StrategyParams:
 
 @dataclass
 class RiskParams:
+    # Illustrative research assumptions; replace with actual MNQ broker costs.
+    entry_slippage_ticks: float = 1.0
+    exit_slippage_ticks: float = 1.0
+    commission_per_side: float = 0.62
     risk_per_trade_pct: float = 1.0
     max_daily_losses: int = 2
     max_daily_loss_r: float = 999.0

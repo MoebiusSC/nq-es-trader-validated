@@ -1,0 +1,244 @@
+{
+  "bars": 1122432,
+  "signals": 4230,
+  "start": "2022-12-26 18:01:00",
+  "end": "2026-05-01 16:59:00",
+  "method": "Frozen rules, chronological year slices; no claim of independent model selection",
+  "monte_carlo": "25000 five-day-block bootstrap draws; end-of-day account mechanics",
+  "scenarios": {
+    "conservative_no_cost": {
+      "trades": 3186,
+      "win_rate": 0.5963590709353421,
+      "expectancy_r": 0.026910351145231385,
+      "total_r": 85.7363787487072,
+      "profit_factor": 1.0764634043775558,
+      "max_drawdown_r": -31.832641579529295,
+      "costs": {
+        "entry_slippage_ticks": 0,
+        "exit_slippage_ticks": 0,
+        "commission_per_side_usd": 0
+      },
+      "year_slices": {
+        "2022": {
+          "trades": 16,
+          "win_rate": 0.625,
+          "expectancy_r": -0.12325073041789247,
+          "total_r": -1.9720116866862796,
+          "profit_factor": 0.6713313855522868,
+          "max_drawdown_r": -4.253230174081238
+        },
+        "2023": {
+          "trades": 977,
+          "win_rate": 0.5946775844421699,
+          "expectancy_r": -0.0062526662656708695,
+          "total_r": -6.108854941560439,
+          "profit_factor": 0.9824320720191768,
+          "max_drawdown_r": -31.8326415795293
+        },
+        "2024": {
+          "trades": 1045,
+          "win_rate": 0.5942583732057416,
+          "expectancy_r": 0.0033455124128706883,
+          "total_r": 3.4960604714498693,
+          "profit_factor": 1.0096436874278296,
+          "max_drawdown_r": -22.158454317172325
+        },
+        "2025": {
+          "trades": 860,
+          "win_rate": 0.5930232558139535,
+          "expectancy_r": 0.05304494225470298,
+          "total_r": 45.618650339044564,
+          "profit_factor": 1.1470347504812937,
+          "max_drawdown_r": -15.591020040272689
+        },
+        "2026": {
+          "trades": 288,
+          "win_rate": 0.6180555555555556,
+          "expectancy_r": 0.1552171339113176,
+          "total_r": 44.70253456645947,
+          "profit_factor": 1.4717205568835898,
+          "max_drawdown_r": -6.900620940998582
+        }
+      },
+      "latest_year_eval_mc": {
+        "pass_rate": 86.67200000000001,
+        "avg_days": 22.64731401144545,
+        "median_days": 21.0,
+        "p10_days": 12.0,
+        "p90_days": 36.0,
+        "eval_target": 6000.0,
+        "trailing_dd": 3000.0
+      },
+      "latest_year_funded_mc": {
+        "survival_rate": 82.312,
+        "p5k": 79.652,
+        "p10k": 39.623999999999995,
+        "avg_extraction": 8499.89364237979,
+        "median_extraction": 9008.331970590074,
+        "backtest_daily_wr": 65.0,
+        "backtest_daily_wl": 1.157881617826139,
+        "backtest_green_day_rate": 55.00000000000001,
+        "trading_days": 80,
+        "avg_win": 698.3192307692354,
+        "avg_loss": 603.1007142857078
+      },
+      "daily_cap_overruns": 85
+    },
+    "base": {
+      "trades": 3182,
+      "win_rate": 0.5703959773727215,
+      "expectancy_r": -0.061103792734573774,
+      "total_r": -194.43226848141376,
+      "profit_factor": 0.8447013709046343,
+      "max_drawdown_r": -230.9976570382589,
+      "costs": {
+        "entry_slippage_ticks": 1,
+        "exit_slippage_ticks": 1,
+        "commission_per_side_usd": 0.62
+      },
+      "year_slices": {
+        "2022": {
+          "trades": 15,
+          "win_rate": 0.5333333333333333,
+          "expectancy_r": -0.22028714575228048,
+          "total_r": -3.3043071862842073,
+          "profit_factor": 0.4935082901726641,
+          "max_drawdown_r": -4.924701732606049
+        },
+        "2023": {
+          "trades": 998,
+          "win_rate": 0.564128256513026,
+          "expectancy_r": -0.09020962220952375,
+          "total_r": -90.0292029651047,
+          "profit_factor": 0.7717997184619299,
+          "max_drawdown_r": -103.42790057881936
+        },
+        "2024": {
+          "trades": 1033,
+          "win_rate": 0.5779283639883833,
+          "expectancy_r": -0.09065165791752974,
+          "total_r": -93.64316262880823,
+          "profit_factor": 0.7655228038567778,
+          "max_drawdown_r": -96.30063372539001
+        },
+        "2025": {
+          "trades": 857,
+          "win_rate": 0.5635939323220537,
+          "expectancy_r": -0.042964552271893566,
+          "total_r": -36.820621297012785,
+          "profit_factor": 0.8951924190641471,
+          "max_drawdown_r": -43.30401294114019
+        },
+        "2026": {
+          "trades": 279,
+          "win_rate": 0.5878136200716846,
+          "expectancy_r": 0.10525098779855263,
+          "total_r": 29.365025595796183,
+          "profit_factor": 1.2928861010605506,
+          "max_drawdown_r": -11.584128795395426
+        }
+      },
+      "latest_year_eval_mc": {
+        "pass_rate": 69.592,
+        "avg_days": 23.987067479020578,
+        "median_days": 22.0,
+        "p10_days": 12.0,
+        "p90_days": 39.0,
+        "eval_target": 6000.0,
+        "trailing_dd": 3000.0
+      },
+      "latest_year_funded_mc": {
+        "survival_rate": 61.507999999999996,
+        "p5k": 58.74,
+        "p10k": 20.752000000000002,
+        "avg_extraction": 6040.19845720156,
+        "median_extraction": 6414.3841678502085,
+        "backtest_daily_wr": 60.0,
+        "backtest_daily_wl": 1.192114029802556,
+        "backtest_green_day_rate": 51.24999999999999,
+        "trading_days": 80,
+        "avg_win": 694.9741666666802,
+        "avg_loss": 582.9762499999981
+      },
+      "daily_cap_overruns": 116
+    },
+    "stress": {
+      "trades": 3022,
+      "win_rate": 0.5393778954334878,
+      "expectancy_r": -0.15415722190983297,
+      "total_r": -465.8631246115152,
+      "profit_factor": 0.6464884297837801,
+      "max_drawdown_r": -472.44790411465647,
+      "costs": {
+        "entry_slippage_ticks": 2,
+        "exit_slippage_ticks": 2,
+        "commission_per_side_usd": 1.24
+      },
+      "year_slices": {
+        "2022": {
+          "trades": 16,
+          "win_rate": 0.5625,
+          "expectancy_r": -0.2596729476774096,
+          "total_r": -4.154767162838554,
+          "profit_factor": 0.411774943612444,
+          "max_drawdown_r": -5.567980418078163
+        },
+        "2023": {
+          "trades": 940,
+          "win_rate": 0.5404255319148936,
+          "expectancy_r": -0.17770972083357411,
+          "total_r": -167.04713758355967,
+          "profit_factor": 0.5897719447393915,
+          "max_drawdown_r": -168.70180571050392
+        },
+        "2024": {
+          "trades": 989,
+          "win_rate": 0.531850353892821,
+          "expectancy_r": -0.18713609436382908,
+          "total_r": -185.07759732582696,
+          "profit_factor": 0.5636739437560804,
+          "max_drawdown_r": -185.91225328290184
+        },
+        "2025": {
+          "trades": 803,
+          "win_rate": 0.5342465753424658,
+          "expectancy_r": -0.13921370617903528,
+          "total_r": -111.78860606176534,
+          "profit_factor": 0.698219773720023,
+          "max_drawdown_r": -115.8342472536495
+        },
+        "2026": {
+          "trades": 274,
+          "win_rate": 0.5766423357664233,
+          "expectancy_r": 0.008047385118523216,
+          "total_r": 2.204983522475361,
+          "profit_factor": 1.0202396425776306,
+          "max_drawdown_r": -17.11243252296761
+        }
+      },
+      "latest_year_eval_mc": {
+        "pass_rate": 30.131999999999998,
+        "avg_days": 32.2978892871366,
+        "median_days": 29.0,
+        "p10_days": 16.0,
+        "p90_days": 53.0,
+        "eval_target": 6000.0,
+        "trailing_dd": 3000.0
+      },
+      "latest_year_funded_mc": {
+        "survival_rate": 18.924,
+        "p5k": 13.472000000000001,
+        "p10k": 0.756,
+        "avg_extraction": 1901.526166242416,
+        "median_extraction": 820.8459000000023,
+        "backtest_daily_wr": 53.75,
+        "backtest_daily_wl": 0.998896645453414,
+        "backtest_green_day_rate": 46.25,
+        "trading_days": 80,
+        "avg_win": 618.5130232558171,
+        "avg_loss": 619.1962162162081
+      },
+      "daily_cap_overruns": 140
+    }
+  }
+}

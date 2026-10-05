@@ -23,6 +23,7 @@ class Trade:
     partial_r: float = 0.0
     remainder_r: float = 0.0
     total_r: float = 0.0
+    commission_r: float = 0.0
     moved_be: bool = False
     partial_taken: bool = False
     risk_ticks: float = 0.0
@@ -37,6 +38,9 @@ class BacktestEngineV2:
         self.tick = cfg.instrument.tick_size
         self.daily_win_cap = daily_win_cap
         self.consec_cooldown = consec_cooldown
+        if min(cfg.risk.entry_slippage_ticks, cfg.risk.exit_slippage_ticks,
+               cfg.risk.commission_per_side) < 0:
+            raise ValueError('Execution costs must be nonnegative')
 
     def run(self, df: pd.DataFrame, signals: list[Signal]) -> list[Trade]:
         trades = []
@@ -79,19 +83,23 @@ class BacktestEngineV2:
         return trades
 
     def _sim(self, df: pd.DataFrame, sig: Signal) -> Trade | None:
-        start_mask = df.index[df['datetime'] >= sig.ts]
-        if len(start_mask) == 0:
+        signal_idx = int(df['datetime'].searchsorted(sig.ts))
+        if signal_idx >= len(df):
             return None
-        signal_idx = start_mask[0]
 
         # Fill on NEXT bar's open — eliminates look-ahead bias
         fill_idx = signal_idx + 1
         if fill_idx >= len(df):
             return None
         fill_bar = df.iloc[fill_idx]
-        entry = fill_bar['open']
-
         is_long = sig.direction == 'long'
+        if (fill_bar['datetime'].date() != sig.ts.date() or
+                fill_bar['datetime'].time() >= self.cfg.sessions.session_close):
+            return None
+        slip = self.tick * self.cfg.risk.entry_slippage_ticks
+        entry = fill_bar['open'] + (slip if is_long else -slip)
+        if (is_long and entry >= sig.target) or (not is_long and entry <= sig.target):
+            return None
 
         # Skip if entry gapped past stop (trade is already a loser at open)
         if is_long and entry <= sig.stop:
@@ -108,7 +116,7 @@ class BacktestEngineV2:
             ceiling = min(rp.max_risk_ticks, GLOBAL_MAX_RISK_TICKS)
             if not (floor <= risk_ticks <= ceiling):
                 return None
-            reward = abs(sig.target - entry)
+            reward = sig.target - entry if is_long else entry - sig.target
             if risk > 0 and (reward / risk) < rp.min_rr:
                 return None
 
@@ -142,37 +150,26 @@ class BacktestEngineV2:
                 best = b['high'] - entry
                 if best > mfe:
                     mfe = best
-                    if trailing and trail_dist > 0:
-                        new_trail = entry + mfe - trail_dist
-                        if new_trail > cur_stop:
-                            cur_stop = self._round(new_trail)
                 hit_stop = b['low'] <= cur_stop
                 hit_target = (not trailing) and b['high'] >= sig.target
             else:
                 best = entry - b['low']
                 if best > mfe:
                     mfe = best
-                    if trailing and trail_dist > 0:
-                        new_trail = entry - mfe + trail_dist
-                        if new_trail < cur_stop:
-                            cur_stop = self._round(new_trail)
                 hit_stop = b['high'] >= cur_stop
                 hit_target = (not trailing) and b['low'] <= sig.target
 
             if hit_stop and hit_target:
-                dist_to_stop = abs(b['open'] - cur_stop)
-                dist_to_target = abs(b['open'] - sig.target)
-                if dist_to_stop <= dist_to_target:
-                    self._close(trade, b, cur_stop, 'stop_ambiguous',
-                                is_long, partial_r, partial, partial_pct)
-                else:
-                    self._close(trade, b, sig.target, 'target',
-                                is_long, partial_r, partial, partial_pct)
+                # OHLC cannot determine event ordering: assume the stop first.
+                stop_fill = min(cur_stop, b['open']) if is_long else max(cur_stop, b['open'])
+                self._close(trade, b, stop_fill, 'stop_ambiguous',
+                            is_long, partial_r, partial, partial_pct)
                 break
 
             if hit_stop:
                 reason = 'trail' if trailing else ('breakeven' if be else 'stop')
-                self._close(trade, b, cur_stop, reason,
+                stop_fill = min(cur_stop, b['open']) if is_long else max(cur_stop, b['open'])
+                self._close(trade, b, stop_fill, reason,
                             is_long, partial_r, partial, partial_pct)
                 break
 
@@ -192,6 +189,11 @@ class BacktestEngineV2:
                 cur_stop = entry
                 be = True
                 trade.moved_be = True
+            # Changes based on this bar's range become active on the next bar.
+            if trailing and trail_dist > 0:
+                new_trail = self._round(entry + mfe - trail_dist if is_long
+                                        else entry - mfe + trail_dist)
+                cur_stop = max(cur_stop, new_trail) if is_long else min(cur_stop, new_trail)
 
             if b['datetime'] >= time_limit and not be:
                 self._close(trade, b, b['close'], 'time_stop',
@@ -220,7 +222,7 @@ class BacktestEngineV2:
             trade.exit_price = exit_price
             trade.total_r = 0
             return
-        slip = self.tick * 0.25
+        slip = self.tick * self.cfg.risk.exit_slippage_ticks
         if reason in ('stop', 'breakeven', 'trail', 'stop_ambiguous',
                        'time_stop', 'session_close', 'end_of_data'):
             exit_price = exit_price - slip if is_long else exit_price + slip
@@ -234,3 +236,6 @@ class BacktestEngineV2:
         else:
             trade.remainder_r = raw_r
             trade.total_r = raw_r
+        trade.commission_r = (2 * self.cfg.risk.commission_per_side /
+                              (trade.risk_ticks * self.cfg.instrument.live_tick_value))
+        trade.total_r -= trade.commission_r
